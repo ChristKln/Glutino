@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#f2f5ee" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0f1613" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f2f5ee">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("gf_theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}</script>
 <title>Glutino – Glutenfrei-Tagebuch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,9 +15,9 @@
   --brand:#1f5a43;--on-brand:#fff;--gold:#e8a900;--danger:#c0392b;--shadow:0 8px 28px rgba(20,32,26,.10);
   --r:22px;color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root{
+:root[data-theme="dark"]{
   --bg:#0f1613;--surface:#18221d;--surface2:#212d26;--ink:#eaf1ea;--muted:#93a498;--line:#2a372f;
-  --brand:#7fd1a6;--on-brand:#0b1a12;--gold:#f2bd2c;--danger:#ff7b6b;--shadow:0 8px 28px rgba(0,0,0,.45);color-scheme:dark}}
+  --brand:#7fd1a6;--on-brand:#0b1a12;--gold:#f2bd2c;--danger:#ff7b6b;--shadow:0 8px 28px rgba(0,0,0,.45);color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0}
 body{font:400 16px/1.45 'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:calc(110px + env(safe-area-inset-bottom))}
@@ -29,22 +29,29 @@ button{cursor:pointer;border:0;background:none}
 
 /* Kopf */
 header{padding:calc(22px + env(safe-area-inset-top)) 0 8px}
+.top{display:flex;justify-content:space-between;align-items:center}
+.icon{width:46px;height:46px;border-radius:50%;background:var(--surface);box-shadow:var(--shadow);font-size:1.3rem}
 header h1{font-size:2.6rem;font-weight:800;line-height:1}
 header p{margin:6px 0 0;color:var(--muted)}
-.stats{display:flex;gap:10px;margin:18px 0 6px}
-.stat{flex:1;background:var(--surface);border-radius:18px;padding:12px 14px;box-shadow:var(--shadow)}
-.stat b{display:block;font:800 1.6rem 'Bricolage Grotesque',sans-serif}
-.stat span{font-size:.8rem;color:var(--muted)}
 
 /* Suche und Filter */
 .bar{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:10px 0 8px;margin-top:8px}
 .search{display:flex;gap:8px}
 .search input{flex:1;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 16px}
 .search select{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:0 10px}
-.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 2px;scrollbar-width:none}
-.chips::-webkit-scrollbar{display:none}
-.chip{flex:none;padding:8px 14px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:.9rem;font-weight:500;transition:.15s}
-.chip[aria-pressed=true]{background:var(--brand);color:var(--on-brand);border-color:var(--brand)}
+.dds{display:flex;gap:8px;padding-top:10px}
+.dd{position:relative;flex:1;min-width:0}
+.dd-btn{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 14px;border-radius:14px;background:var(--surface);border:1px solid var(--line);font-weight:500;white-space:nowrap}
+.dd-btn.active{background:var(--brand);color:var(--on-brand);border-color:var(--brand)}
+.dd-panel{display:none;position:absolute;z-index:40;top:calc(100% + 6px);left:0;width:min(320px,calc(100vw - 36px));max-height:55dvh;overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:6px}
+.dd.open .dd-panel{display:block}
+#dd-brand .dd-panel{left:auto;right:0}
+.dd-reset{width:100%;text-align:left;padding:10px 12px;color:var(--brand);font-weight:700;border-radius:12px}
+.opt{display:flex;align-items:center;gap:12px;margin:0;padding:10px 12px;border-radius:12px;font-weight:500;font-size:1rem;cursor:pointer}
+.opt:hover{background:var(--surface2)}
+.opt input{width:20px;height:20px;accent-color:var(--brand);flex:none}
+.opt span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.opt em{margin-left:auto;font-style:normal;color:var(--muted);font-size:.8rem}
 
 /* Karten */
 #list{display:grid;gap:12px;margin-top:10px}
@@ -100,13 +107,8 @@ label{display:block;font-size:.85rem;font-weight:700;margin:14px 0 6px}
 
 <div class="wrap">
   <header>
-    <h1>Glutino</h1>
+    <div class="top"><h1>Glutino</h1><button id="theme" class="icon" onclick="toggleTheme()" aria-label="Zwischen Tag- und Nachtmodus wechseln"></button></div>
     <p>Dein glutenfreies Verkostungs-Tagebuch</p>
-    <div class="stats">
-      <div class="stat"><b id="s-count">0</b><span>Produkte</span></div>
-      <div class="stat"><b id="s-avg">–</b><span>Ø Sterne</span></div>
-      <div class="stat"><b id="s-top">0</b><span>Favoriten</span></div>
-    </div>
   </header>
 
   <div class="bar">
@@ -119,7 +121,7 @@ label{display:block;font-size:.85rem;font-weight:700;margin:14px 0 6px}
         <option value="price">Preis</option>
       </select>
     </div>
-    <div class="chips" id="chips"></div>
+    <div class="dds"><div class="dd" id="dd-cat"></div><div class="dd" id="dd-brand"></div></div>
   </div>
 
   <main id="list"></main>
@@ -204,12 +206,18 @@ label{display:block;font-size:.85rem;font-weight:700;margin:14px 0 6px}
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const CATS = [['Brot','🍞'],['Mehl & Backmischungen','🌾'],['Nudeln','🍝'],['Snacks & Knabberzeug','🥨'],['Müsli & Frühstück','🥣'],['Süßigkeiten','🍫'],['Fertiggerichte','🍲'],['Sonstiges','📦']];
+const BASE = [['Brot','🍞'],['Brötchen & Gebäck','🥐'],['Kuchen & Kekse','🍪'],['Mehl & Backmischungen','🌾'],['Backzutaten','🧁'],['Nudeln','🍝'],['Reis & Getreide','🍚'],['Pizza & Tiefkühl','🍕'],['Fertiggerichte','🍲'],['Suppen & Saucen','🥫'],['Snacks & Knabberzeug','🥨'],['Müsli & Frühstück','🥣'],['Aufstriche','🍯'],['Süßigkeiten','🍫'],['Milch & Alternativen','🥛'],['Getränke & Bier','🍺'],['Sonstiges','📦']];
+let custom = (() => { try { return JSON.parse(localStorage.getItem('gf_cats')) || []; } catch { return []; } })();
+const allCats = () => {
+  const known = new Set(BASE.map(c => c[0]));
+  const extra = [...new Set([...custom, ...products.map(p => p.category)].filter(c => c && !known.has(c)))];
+  return BASE.concat(extra.map(c => [c, '🏷️']));
+};
 const LABELS = ['Bitte wählen','Schlecht','Geht so','Gut','Sehr gut','Favorit'];
-const emoji = c => (CATS.find(x => x[0] === c) || ['','📦'])[1];
+const emoji = c => (allCats().find(x => x[0] === c) || ['','📦'])[1];
 
 let products = (() => { try { return JSON.parse(localStorage.getItem('gf_products')) || []; } catch { return []; } })();
-let filt = { q:'', cat:'', sort:'new' };
+let filt = { q:'', cat:new Set(), brand:new Set(), sort:'new' };
 let editing = null, rating = 0;
 
 function persist(){
@@ -226,9 +234,13 @@ function closeSheet(id){ $('#sh-'+id).classList.remove('open'); }
 
 /* Liste */
 function render(){
+  const bs = new Set(products.map(p => p.brand || '')); filt.brand.forEach(b => bs.has(b) || filt.brand.delete(b));
+  const cs = new Set(allCats().map(c => c[0])); filt.cat.forEach(c => cs.has(c) || filt.cat.delete(c));
+  renderChips();
   const q = filt.q.toLowerCase();
   let items = products.filter(p =>
-    (!filt.cat || p.category === filt.cat) &&
+    (!filt.cat.size || filt.cat.has(p.category)) &&
+    (!filt.brand.size || filt.brand.has(p.brand || '')) &&
     (p.name+' '+p.brand+' '+p.store).toLowerCase().includes(q));
   const by = {
     new:(a,b)=>b.id-a.id,
@@ -250,19 +262,58 @@ function render(){
     </button>`).join('')
     : `<div class="empty"><b>${products.length ? 'Nichts gefunden' : 'Noch nichts im Tagebuch'}</b>${products.length ? 'Ändere Suche oder Filter.' : 'Tippe auf Scannen und bewerte dein erstes Produkt.'}</div>`;
 
-  const n = products.length;
-  $('#s-count').textContent = n;
-  $('#s-avg').textContent = n ? (products.reduce((s,p)=>s+p.rating,0)/n).toFixed(1).replace('.',',') : '–';
-  $('#s-top').textContent = products.filter(p=>p.rating===5).length;
+}
+function buildDD(id, label, opts, set){
+  const el = $('#'+id), old = el.querySelector('.dd-panel'), st = old ? old.scrollTop : 0;
+  el.innerHTML = `<button type="button" class="dd-btn ${set.size?'active':''}" aria-expanded="${el.classList.contains('open')}" onclick="toggleDD('${id}')"><span>${label}${set.size?' ('+set.size+')':''}</span><span>▾</span></button>
+    <div class="dd-panel" role="group" aria-label="${label}">
+      <button type="button" class="dd-reset" onclick="clearDD('${id}')">Auswahl zurücksetzen</button>
+      ${opts.map(([v,l,n]) => `<label class="opt"><input type="checkbox" value="${esc(v)}" ${set.has(v)?'checked':''}><span>${esc(l)}</span><em>${n}</em></label>`).join('')}
+    </div>`;
+  el.querySelector('.dd-panel').scrollTop = st;
 }
 function renderChips(){
-  const all = [['','Alle']].concat(CATS.map(c => [c[0], c[1]+' '+c[0]]));
-  $('#chips').innerHTML = all.map(([v,l]) =>
-    `<button class="chip" aria-pressed="${filt.cat===v}" onclick="filt.cat='${v.replace(/'/g,"\\'")}';renderChips();render()">${esc(l)}</button>`).join('');
+  const count = f => products.reduce((m,p) => (m[f(p)] = (m[f(p)]||0)+1, m), {});
+  const cc = count(p => p.category), bc = count(p => p.brand || '');
+  buildDD('dd-cat', 'Kategorie', allCats().map(c => [c[0], c[1]+' '+c[0], cc[c[0]]||0]), filt.cat);
+  const brands = Object.keys(bc).sort((a,b) => (a===''?1:b===''?-1:a.localeCompare(b,'de')));
+  buildDD('dd-brand', 'Hersteller', brands.map(b => [b, b || 'Ohne Marke', bc[b]]), filt.brand);
 }
+function toggleDD(id){
+  document.querySelectorAll('.dd').forEach(d => { if (d.id !== id) d.classList.remove('open'); });
+  const el = $('#'+id); el.classList.toggle('open');
+  el.querySelector('.dd-btn').setAttribute('aria-expanded', el.classList.contains('open'));
+}
+function clearDD(id){ (id === 'dd-cat' ? filt.cat : filt.brand).clear(); render(); }
+document.addEventListener('change', e => {
+  const cb = e.target.closest('.dd input'); if (!cb) return;
+  const set = cb.closest('.dd').id === 'dd-cat' ? filt.cat : filt.brand;
+  cb.checked ? set.add(cb.value) : set.delete(cb.value);
+  render();
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dd')) document.querySelectorAll('.dd.open').forEach(d => d.classList.remove('open'));
+});
+function fillCats(sel){
+  const list = allCats();
+  $('#f-cat').innerHTML = list.map(c => `<option value="${esc(c[0])}">${c[1]} ${esc(c[0])}</option>`).join('')
+    + '<option value="__new">＋ Eigene Kategorie …</option>';
+  if (sel) $('#f-cat').value = sel;
+}
+let lastCat = 'Sonstiges';
+$('#f-cat').onchange = e => {
+  if (e.target.value !== '__new') { lastCat = e.target.value; return; }
+  const n = (prompt('Name der neuen Kategorie:') || '').trim();
+  if (!n) { e.target.value = lastCat; return; }
+  if (!allCats().some(c => c[0].toLowerCase() === n.toLowerCase())) {
+    custom.push(n);
+    try { localStorage.setItem('gf_cats', JSON.stringify(custom)); } catch {}
+  }
+  const name = allCats().find(c => c[0].toLowerCase() === n.toLowerCase())[0];
+  fillCats(name); lastCat = name; renderChips();
+};
 $('#q').oninput = e => { filt.q = e.target.value; render(); };
 $('#sort').onchange = e => { filt.sort = e.target.value; render(); };
-$('#f-cat').innerHTML = CATS.map(c => `<option value="${esc(c[0])}">${c[1]} ${esc(c[0])}</option>`).join('');
 $('#stars').innerHTML = [1,2,3,4,5].map(i => `<button type="button" aria-label="${i} Sterne" onclick="setRating(${i})">★</button>`).join('') + '<small id="r-text"></small>';
 
 function setRating(r){
@@ -315,12 +366,21 @@ async function found(code){
 /* Produktdaten von Open Food Facts */
 function guessCat(tags){
   const s = JSON.stringify(tags || []).toLowerCase();
+  if (/brötchen|rolls|buns|croissant|pastr/.test(s)) return 'Brötchen & Gebäck';
+  if (/cake|kuchen|cookie|keks|biscuit/.test(s)) return 'Kuchen & Kekse';
+  if (/pizza|frozen|tiefk/.test(s)) return 'Pizza & Tiefkühl';
+  if (/soup|suppe|sauce|soße/.test(s)) return 'Suppen & Saucen';
+  if (/spread|aufstrich|jam|marmelade|honey|nutella/.test(s)) return 'Aufstriche';
+  if (/rice|reis|oat|hafer|quinoa|hirse|grain/.test(s)) return 'Reis & Getreide';
+  if (/beverage|drink|beer|bier|getränk/.test(s)) return 'Getränke & Bier';
+  if (/milk|milch|yogurt|joghurt|plant-based/.test(s)) return 'Milch & Alternativen';
+  if (/baking|backzutat|yeast|hefe/.test(s)) return 'Backzutaten';
   if (/bread|brot/.test(s)) return 'Brot';
   if (/flour|mehl|mix/.test(s)) return 'Mehl & Backmischungen';
   if (/pasta|nudel/.test(s)) return 'Nudeln';
   if (/snack|chips|cracker/.test(s)) return 'Snacks & Knabberzeug';
   if (/breakfast|muesli|cereal/.test(s)) return 'Müsli & Frühstück';
-  if (/chocolate|sweet|candy|biscuit|cookie/.test(s)) return 'Süßigkeiten';
+  if (/chocolate|sweet|candy/.test(s)) return 'Süßigkeiten';
   if (/meal|pizza|soup/.test(s)) return 'Fertiggerichte';
   return 'Sonstiges';
 }
@@ -346,7 +406,7 @@ function openForm(id, draft){
   editing = id ? products.find(p => p.id === id) : null;
   const p = editing || draft || { barcode:'', name:'', brand:'', category:'Sonstiges', image:'', src:'Manuell erfasst' };
   $('#f-title').textContent = editing ? 'Eintrag bearbeiten' : 'Produkt bewerten';
-  $('#f-name').value = p.name; $('#f-brand').value = p.brand; $('#f-cat').value = p.category;
+  $('#f-name').value = p.name; $('#f-brand').value = p.brand; fillCats(p.category); lastCat = $('#f-cat').value;
   $('#f-store').value = p.store || ''; $('#f-price').value = p.price || ''; $('#f-notes').value = p.notes || '';
   $('#f-name-d').textContent = p.barcode ? 'EAN ' + p.barcode : 'Ohne Barcode';
   $('#f-src').textContent = editing ? 'Erfasst am ' + p.date : p.src;
@@ -366,7 +426,7 @@ function saveProduct(e){
   };
   if (editing) Object.assign(editing, data);
   else products.unshift({ id:Date.now(), date:new Date().toLocaleDateString('de-DE'), ...data });
-  persist(); closeSheet('form'); render(); toast(editing ? 'Änderungen gespeichert' : 'Gespeichert');
+  persist(); closeSheet('form'); renderChips(); render(); toast(editing ? 'Änderungen gespeichert' : 'Gespeichert');
 }
 function deleteProduct(){
   if (!editing || !confirm('Diesen Eintrag wirklich löschen?')) return;
@@ -397,7 +457,18 @@ function importData(e){
   r.readAsText(f); e.target.value = '';
 }
 
+function applyTheme(t){
+  document.documentElement.dataset.theme = t;
+  $('#theme').textContent = t === 'dark' ? '☀️' : '🌙';
+  document.querySelector('meta[name=theme-color]').content = t === 'dark' ? '#0f1613' : '#f2f5ee';
+}
+function toggleTheme(){
+  const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('gf_theme', t); } catch {}
+  applyTheme(t);
+}
 const form = $('#form');
+applyTheme(document.documentElement.dataset.theme || 'light');
 renderChips(); render();
 </script>
 </body>
