@@ -211,7 +211,7 @@ let custom = (() => { try { return JSON.parse(localStorage.getItem('gf_cats')) |
 const allCats = () => {
   const known = new Set(BASE.map(c => c[0]));
   const extra = [...new Set([...custom, ...products.map(p => p.category)].filter(c => c && !known.has(c)))];
-  return BASE.concat(extra.map(c => [c, '🏷️']));
+  return BASE.concat(extra.map(c => [c, '🏷️'])).sort((x, y) => x[0].localeCompare(y[0], 'de', { sensitivity:'base' }));
 };
 const LABELS = ['Bitte wählen','Schlecht','Geht so','Gut','Sehr gut','Favorit'];
 const emoji = c => (allCats().find(x => x[0] === c) || ['','📦'])[1];
@@ -276,7 +276,7 @@ function renderChips(){
   const count = f => products.reduce((m,p) => (m[f(p)] = (m[f(p)]||0)+1, m), {});
   const cc = count(p => p.category), bc = count(p => p.brand || '');
   buildDD('dd-cat', 'Kategorie', allCats().map(c => [c[0], c[1]+' '+c[0], cc[c[0]]||0]), filt.cat);
-  const brands = Object.keys(bc).sort((a,b) => (a===''?1:b===''?-1:a.localeCompare(b,'de')));
+  const brands = Object.keys(bc).sort((a,b) => (a || 'Ohne Marke').localeCompare(b || 'Ohne Marke', 'de', { sensitivity:'base' }));
   buildDD('dd-brand', 'Hersteller', brands.map(b => [b, b || 'Ohne Marke', bc[b]]), filt.brand);
 }
 function toggleDD(id){
