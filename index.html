@@ -23,11 +23,11 @@
                 <span>🌾</span> Glutino
             </h1>
             <div class="flex gap-2">
-                <button onclick="switchTab('scanner')" id="btn-scanner" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm">
-                    📷 Scannen
-                </button>
-                <button onclick="switchTab('list')" id="btn-list" class="bg-emerald-800 hover:bg-emerald-600 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm">
+                <button onclick="switchTab('list')" id="btn-list" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm">
                     📋 Dashboard (<span id="product-count">0</span>)
+                </button>
+                <button onclick="switchTab('scanner')" id="btn-scanner" class="bg-emerald-800 hover:bg-emerald-600 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm">
+                    📷 Scannen
                 </button>
             </div>
         </div>
@@ -36,13 +36,61 @@
     <!-- Main Container -->
     <main class="max-w-4xl mx-auto px-4 py-6 flex-grow w-full">
 
-        <!-- TAB 1: SCANNER & FORMULAR -->
-        <section id="tab-scanner" class="space-y-6">
+        <!-- TAB 1: DASHBOARD & FILTER-LISTE (Standard-Ansicht) -->
+        <section id="tab-list" class="space-y-4">
+            <!-- Filter & Suchbereich -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 space-y-3">
+                <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
+                    <input type="text" id="search-input" oninput="renderList()" placeholder="Nach Name, Marke oder Ort suchen..." class="w-full sm:w-1/2 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    
+                    <div class="flex gap-2 w-full sm:w-auto overflow-x-auto">
+                        <!-- Kategorie Filter -->
+                        <select id="filter-category" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <option value="">Alle Kategorien</option>
+                            <option value="Brot">🍞 Brot</option>
+                            <option value="Mehl & Backmischungen">🌾 Mehl & Backmischungen</option>
+                            <option value="Nudeln">🍝 Nudeln</option>
+                            <option value="Snacks & Knabberzeug">🥨 Snacks & Knabberzeug</option>
+                            <option value="Müsli & Frühstück">🥣 Müsli & Frühstück</option>
+                            <option value="Süßigkeiten">🍫 Süßigkeiten</option>
+                            <option value="Fertiggerichte">🍲 Fertiggerichte</option>
+                            <option value="Sonstiges">📦 Sonstiges</option>
+                        </select>
+
+                        <!-- Marken Filter -->
+                        <select id="filter-brand" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <option value="">Alle Marken</option>
+                        </select>
+
+                        <!-- Sterne Filter -->
+                        <select id="filter-rating" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <option value="">Alle Sterne</option>
+                            <option value="5">5 Sterne</option>
+                            <option value="4">4+ Sterne</option>
+                            <option value="3">3+ Sterne</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="product-list" class="space-y-3">
+                <!-- Dynamische Einträge -->
+            </div>
+        </section>
+
+        <!-- TAB 2: SCANNER & FORMULAR -->
+        <section id="tab-scanner" class="space-y-6 hidden">
             
             <!-- Scanner Box -->
             <div class="bg-white rounded-2xl shadow-sm p-5 border border-emerald-100">
-                <h2 class="text-lg font-semibold text-emerald-800 mb-3">Produkt scannen</h2>
-                <div id="reader" class="w-full rounded-xl overflow-hidden bg-gray-100 border border-gray-200"></div>
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-lg font-semibold text-emerald-800">Produkt scannen</h2>
+                    <button onclick="initScanner()" class="text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 px-3 py-1.5 rounded-lg font-medium transition">🔄 Kamera neu starten</button>
+                </div>
+                
+                <div id="reader" class="w-full rounded-xl overflow-hidden bg-gray-100 border border-gray-200 min-h-[200px]"></div>
+                <p id="cam-error" class="text-xs text-amber-600 mt-2 hidden">Kamera konnte nicht gestartet werden (evtl. Berechtigung fehlgeschlagen oder HTTP statt HTTPS). Du kannst den Barcode stattdessen unten manuell eingeben:</p>
+
                 <div class="mt-4 flex gap-2">
                     <input type="text" id="manual-barcode" placeholder="Oder EAN-Code manuell eingeben..." class="flex-grow border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                     <button onclick="fetchProduct(document.getElementById('manual-barcode').value)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition">
@@ -131,48 +179,6 @@
             </div>
         </section>
 
-        <!-- TAB 2: DASHBOARD & FILTER-LISTE -->
-        <section id="tab-list" class="space-y-4 hidden">
-            <!-- Filter & Suchbereich -->
-            <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 space-y-3">
-                <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
-                    <input type="text" id="search-input" oninput="renderList()" placeholder="Nach Name, Marke oder Ort suchen..." class="w-full sm:w-1/2 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                    
-                    <div class="flex gap-2 w-full sm:w-auto overflow-x-auto">
-                        <!-- Kategorie Filter -->
-                        <select id="filter-category" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
-                            <option value="">Alle Kategorien</option>
-                            <option value="Brot">🍞 Brot</option>
-                            <option value="Mehl & Backmischungen">🌾 Mehl & Backmischungen</option>
-                            <option value="Nudeln">🍝 Nudeln</option>
-                            <option value="Snacks & Knabberzeug">🥨 Snacks & Knabberzeug</option>
-                            <option value="Müsli & Frühstück">🥣 Müsli & Frühstück</option>
-                            <option value="Süßigkeiten">🍫 Süßigkeiten</option>
-                            <option value="Fertiggerichte">🍲 Fertiggerichte</option>
-                            <option value="Sonstiges">📦 Sonstiges</option>
-                        </select>
-
-                        <!-- Marken Filter (wird dynamisch befüllt) -->
-                        <select id="filter-brand" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
-                            <option value="">Alle Marken</option>
-                        </select>
-
-                        <!-- Sterne Filter -->
-                        <select id="filter-rating" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
-                            <option value="">Alle Sterne</option>
-                            <option value="5">5 Sterne</option>
-                            <option value="4">4+ Sterne</option>
-                            <option value="3">3+ Sterne</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div id="product-list" class="space-y-3">
-                <!-- Dynamische Einträge -->
-            </div>
-        </section>
-
     </main>
 
     <!-- Footer -->
@@ -202,16 +208,24 @@
                 initScanner();
             } else {
                 stopScanner();
-                updateBrandFilterOptions();
-                renderList();
             }
             updateCount();
         }
 
         function initScanner() {
+            document.getElementById('cam-error').classList.add('hidden');
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
             }
+            
+            if (html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => startCameraScan()).catch(() => startCameraScan());
+            } else {
+                startCameraScan();
+            }
+        }
+
+        function startCameraScan() {
             html5QrCode.start(
                 { facingMode: "environment" },
                 { fps: 10, qrbox: { width: 250, height: 150 } },
@@ -222,7 +236,8 @@
                 },
                 (error) => {}
             ).catch(err => {
-                console.log("Kamera konnte nicht gestartet werden:", err);
+                console.log("Kamera-Fehler:", err);
+                document.getElementById('cam-error').classList.remove('hidden');
             });
         }
 
@@ -256,7 +271,6 @@
                     document.getElementById('prod-brand').value = brand;
                     document.getElementById('prod-image').value = imageUrl;
 
-                    // Intelligente Vorauswahl der Kategorie anhand Open Food Facts Tags
                     const catString = JSON.stringify(p.categories_tags || []).toLowerCase();
                     const categorySelect = document.getElementById('prod-category');
                     if (catString.includes('bread') || catString.includes('brot')) categorySelect.value = "Brot";
@@ -310,6 +324,7 @@
                 id: Date.now(),
                 barcode: document.getElementById('prod-barcode').value,
                 name: document.getElementById('prod-name').value,
+                brand: document.getElementById('prod-brand-display') ? document.getElementById('prod-brand-display').innerText : document.getElementById('prod-brand').value,
                 brand: document.getElementById('prod-brand').value,
                 category: document.getElementById('prod-category').value,
                 store: document.getElementById('prod-store').value,
@@ -333,7 +348,7 @@
             document.getElementById('prod-img-preview').classList.add('hidden');
             setRating(0);
             document.getElementById('manual-barcode').value = '';
-            initScanner();
+            switchTab('list');
         }
 
         function deleteProduct(id) {
@@ -373,7 +388,7 @@
             });
 
             if (filtered.length === 0) {
-                listEl.innerHTML = `<div class="bg-white p-8 rounded-2xl text-center text-gray-400 border border-emerald-100">Keine passenden Einträge gefunden.</div>`;
+                listEl.innerHTML = `<div class="bg-white p-8 rounded-2xl text-center text-gray-400 border border-emerald-100">Keine passenden Einträge gefunden. Starte den Scanner um ein Produkt hinzuzufügen!</div>`;
                 return;
             }
 
@@ -411,8 +426,10 @@
             document.getElementById('product-count').innerText = products.length;
         }
 
+        // Initialisierung beim Start
         updateCount();
-        initScanner();
+        updateBrandFilterOptions();
+        renderList();
     </script>
 </body>
 </html>
