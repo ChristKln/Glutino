@@ -189,8 +189,10 @@ label{display:block;font-size:.85rem;font-weight:700;margin:14px 0 6px}
   <div class="panel">
     <div class="grab"></div>
     <h2>Mehr</h2>
-    <p class="hint">Deine Daten liegen nur in diesem Browser. Sichere sie regelmäßig oder zieh sie auf ein neues Gerät um.</p>
+    <p class="hint" id="sync-state"></p>
     <div class="actions" style="flex-direction:column">
+      <button class="btn" onclick="changeCode()">Listen-Code ändern</button>
+      <button class="btn" onclick="offerUpload(true)">Lokale Einträge dieses Geräts übernehmen</button>
       <button class="btn" onclick="exportData()">Daten exportieren</button>
       <button class="btn" onclick="$('#imp').click()">Daten importieren</button>
       <input type="file" id="imp" accept="application/json" class="hidden" onchange="importData(event)">
@@ -199,8 +201,51 @@ label{display:block;font-size:.85rem;font-weight:700;margin:14px 0 6px}
   </div>
 </div>
 
+<!-- Listen-Code -->
+<div class="sheet" id="sh-code">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2>Gemeinsame Liste</h2>
+    <p class="hint">Gib den Listen-Code ein. Alle mit demselben Code sehen und bearbeiten dieselbe Liste. Für eine neue Liste wähle einen langen, schwer zu erratenden Code (mindestens 12 Zeichen).</p>
+    <label for="code-in">Listen-Code</label>
+    <input class="f" id="code-in" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="z. B. glutenfrei-kueche-xk4">
+    <div class="actions"><button class="btn primary" onclick="setCode()">Verbinden</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status"></div>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, setDoc, deleteDoc, onSnapshot }
+  from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyA5a3iErqVeVC_a3sCc16ONBgIuOEbFrEw",
+  authDomain: "glutino-b0e68.firebaseapp.com",
+  projectId: "glutino-b0e68",
+  storageBucket: "glutino-b0e68.firebasestorage.app",
+  messagingSenderId: "11842074917",
+  appId: "1:11842074917:web:87889a666a09911ef702cc"
+});
+const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+
+let col = null, unsub = null;
+window.cloud = {
+  connect(code, onData, onError){
+    if (unsub) unsub();
+    col = collection(db, 'lists', code, 'products');
+    unsub = onSnapshot(col, { includeMetadataChanges: true }, snap => {
+      if (snap.metadata.fromCache && snap.empty) return;
+      onData(snap.docs.map(d => d.data()), snap.metadata.fromCache);
+    }, onError);
+  },
+  set(p){ return setDoc(doc(col, String(p.id)), JSON.parse(JSON.stringify(p))); },
+  remove(id){ return deleteDoc(doc(col, String(id))); },
+  disconnect(){ if (unsub) unsub(); unsub = null; col = null; }
+};
+window.dispatchEvent(new Event('cloud-ready'));
+</script>
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -214,19 +259,21 @@ const allCats = () => {
 const LABELS = ['Bitte wählen','Ungenießbar','Sehr schlecht','Schlecht','Eher schlecht','Geht so','Okay','Gut','Sehr gut','Hervorragend','Favorit'];
 const emoji = c => (allCats().find(x => x[0] === c) || ['','📦'])[1];
 
-let products = (() => { try { return JSON.parse(localStorage.getItem('gf_products')) || []; } catch { return []; } })();
+const readLS = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+let legacy = readLS('gf_products') || [];   /* alte lokale Daten, nur zum einmaligen Übernehmen */
 try { /* einmalig: alte 5-Sterne-Bewertungen auf die 10er-Skala umrechnen */
   if (!localStorage.getItem('gf_scale10')) {
-    products.forEach(p => { if (p.rating) p.rating *= 2; });
-    localStorage.setItem('gf_products', JSON.stringify(products));
+    legacy.forEach(p => { if (p.rating) p.rating *= 2; });
+    localStorage.setItem('gf_products', JSON.stringify(legacy));
     localStorage.setItem('gf_scale10', '1');
   }
 } catch {}
+let products = readLS('gf_cache') || legacy;   /* Anzeige-Stand, wird von der Cloud überschrieben */
 let filt = { q:'', cat:new Set(), brand:new Set(), sort:'new' };
 let editing = null, rating = 0;
 
 function persist(){
-  try { localStorage.setItem('gf_products', JSON.stringify(products)); }
+  try { localStorage.setItem('gf_cache', JSON.stringify(products)); }
   catch { toast('Speichern nicht möglich. Ist der Speicher voll?'); }
 }
 function toast(msg){
@@ -429,12 +476,14 @@ function saveProduct(e){
     name:$('#f-name').value.trim(), brand:$('#f-brand').value.trim(), category:$('#f-cat').value,
     price:$('#f-price').value, rating, notes:$('#f-notes').value.trim()
   };
+  let saved = editing;
   if (editing) Object.assign(editing, data);
-  else products.unshift({ id:Date.now(), date:new Date().toLocaleDateString('de-DE'), ...data });
-  persist(); closeSheet('form'); renderChips(); render(); toast(editing ? 'Änderungen gespeichert' : 'Gespeichert');
+  else { saved = { id:Date.now(), date:new Date().toLocaleDateString('de-DE'), ...data }; products.unshift(saved); }
+  cloudSet(saved); persist(); closeSheet('form'); renderChips(); render(); toast(editing ? 'Änderungen gespeichert' : 'Gespeichert');
 }
 function deleteProduct(){
   if (!editing || !confirm('Diesen Eintrag wirklich löschen?')) return;
+  cloudDel(editing.id);
   products = products.filter(p => p.id !== editing.id);
   persist(); closeSheet('form'); render(); toast('Eintrag gelöscht');
 }
@@ -455,7 +504,7 @@ function importData(e){
       if (!Array.isArray(list)) throw 0;
       const ids = new Set(products.map(p => p.id));
       const add = list.filter(p => p && p.id && p.name && !ids.has(p.id));
-      products = products.concat(add); persist(); render(); closeSheet('more');
+      products = products.concat(add); add.forEach(cloudSet); persist(); render(); closeSheet('more');
       toast(add.length + ' Einträge importiert');
     } catch { toast('Diese Datei ist keine Glutino-Sicherung.'); }
   };
@@ -472,9 +521,52 @@ function toggleTheme(){
   try { localStorage.setItem('gf_theme', t); } catch {}
   applyTheme(t);
 }
+/* Gemeinsame Liste (Firebase Firestore) */
+const cloudSet = p => { if (window.cloud) window.cloud.set(p).catch(() => toast('Synchronisierung fehlgeschlagen.')); };
+const cloudDel = id => { if (window.cloud) window.cloud.remove(id).catch(() => toast('Synchronisierung fehlgeschlagen.')); };
+let synced = false;
+const normCode = c => String(c || '').trim().toLowerCase().replace(/[\s\/]+/g, '-');
+function setSync(t){ $('#sync-state').textContent = 'Liste „' + (localStorage.getItem('gf_code') || '').slice(0,3) + '…“ · ' + t; }
+function setCode(){
+  const c = normCode($('#code-in').value);
+  if (c.length < 8) return toast('Der Code ist zu kurz. Nimm mindestens 8, besser 12 Zeichen.');
+  try { localStorage.setItem('gf_code', c); } catch {}
+  products = []; persist(); render(); closeSheet('code'); startCloud();
+}
+function startCloud(){
+  const code = localStorage.getItem('gf_code');
+  if (!code) return openSheet('code');
+  setSync('Wird verbunden …');
+  if (!window.cloud) return;
+  synced = false;
+  window.cloud.connect(code, (list, fromCache) => {
+    products = list; persist(); render();
+    setSync(fromCache ? 'Offline-Stand, Änderungen werden später abgeglichen' : 'Verbunden und abgeglichen');
+    if (!fromCache && !synced) { synced = true; offerUpload(false); }
+  }, () => setSync('Kein Zugriff. Prüfe die Firestore-Regeln.'));
+}
+function offerUpload(manual){
+  const ids = new Set(products.map(p => p.id));
+  const add = legacy.filter(p => p && p.id && p.name && !ids.has(p.id));
+  if (!add.length) { if (manual) toast('Keine lokalen Einträge zum Übernehmen.'); return; }
+  if (!manual && localStorage.getItem('gf_uploaded')) return;
+  try { localStorage.setItem('gf_uploaded', '1'); } catch {}
+  if (!confirm(add.length + ' Einträge von diesem Gerät in die gemeinsame Liste übernehmen?')) return;
+  add.forEach(cloudSet); toast(add.length + ' Einträge übernommen');
+}
+function changeCode(){
+  if (!confirm('Mit einem anderen Code verbinden? Die aktuelle Liste wird auf diesem Gerät dann nicht mehr angezeigt.')) return;
+  if (window.cloud) window.cloud.disconnect();
+  try { localStorage.removeItem('gf_code'); } catch {}
+  products = []; persist(); render(); closeSheet('more'); $('#code-in').value = ''; openSheet('code');
+}
+window.addEventListener('cloud-ready', startCloud);
+
 const form = $('#form');
 applyTheme(document.documentElement.dataset.theme || 'light');
 renderChips(); render();
+if (!localStorage.getItem('gf_code')) openSheet('code'); else setSync('Wird verbunden …');
 </script>
 </body>
-</html> 
+</html>
+ 
