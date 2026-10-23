@@ -51,7 +51,7 @@
                 </div>
             </div>
 
-            <!-- Produkt- & Bewertungsformular (wird nach Scan/Auswahl gefüllt) -->
+            <!-- Produkt- & Bewertungsformular -->
             <div id="form-container" class="bg-white rounded-2xl shadow-sm p-5 border border-emerald-100 hidden">
                 <h2 class="text-lg font-semibold text-emerald-800 mb-4 flex items-center justify-between">
                     <span>Produkt bewerten</span>
@@ -154,7 +154,6 @@
         let html5QrCode = null;
         let currentRating = 0;
 
-        // Tabs umschalten
         function switchTab(tab) {
             document.getElementById('tab-scanner').classList.toggle('hidden', tab !== 'scanner');
             document.getElementById('tab-list').classList.toggle('hidden', tab !== 'list');
@@ -176,7 +175,6 @@
             updateCount();
         }
 
-        // Barcode Scanner initialisieren
         function initScanner() {
             if (!html5QrCode) {
                 html5QrCode = new Html5Qrcode("reader");
@@ -191,7 +189,7 @@
                 },
                 (error) => {}
             ).catch(err => {
-                console.log("Kamera konnte nicht gestartet werden (evtl. kein HTTPS oder keine Berechtigung):", err);
+                console.log("Kamera konnte nicht gestartet werden:", err);
             });
         }
 
@@ -201,7 +199,6 @@
             }
         }
 
-        // Open Food Facts API abfragen
         async function fetchProduct(barcode) {
             if (!barcode) return;
             barcode = barcode.trim();
@@ -249,7 +246,6 @@
             }
         }
 
-        // Sterne-Bewertung setzen
         function setRating(rating) {
             currentRating = rating;
             document.getElementById('prod-rating').value = rating;
@@ -268,7 +264,6 @@
             });
         }
 
-        // Produkt speichern
         function saveProduct(e) {
             e.preventDefault();
             const product = {
@@ -301,7 +296,6 @@
             initScanner();
         }
 
-        // Produkt löschen
         function deleteProduct(id) {
             if (confirm("Möchtest du diesen Eintrag wirklich löschen?")) {
                 products = products.filter(p => p.id !== id);
@@ -311,7 +305,6 @@
             }
         }
 
-        // Liste rendern
         function renderList() {
             const listEl = document.getElementById('product-list');
             const search = document.getElementById('search-input').value.toLowerCase();
@@ -362,7 +355,6 @@
             document.getElementById('product-count').innerText = products.length;
         }
 
-        // App Start
         updateCount();
         initScanner();
     </script>
