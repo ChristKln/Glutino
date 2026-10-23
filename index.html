@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Glutenfrei Verkostungs-Tracker</title>
+    <title>Glutino – Glutenfrei Verkostungs-Tracker</title>
     <!-- Tailwind CSS für modernes Design -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- html5-qrcode Bibliothek für den Barcode-Scanner -->
@@ -20,14 +20,14 @@
     <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold flex items-center gap-2">
-                <span>🌾</span> Glutenfrei Tracker
+                <span>🌾</span> Glutino
             </h1>
             <div class="flex gap-2">
                 <button onclick="switchTab('scanner')" id="btn-scanner" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm">
                     📷 Scannen
                 </button>
                 <button onclick="switchTab('list')" id="btn-list" class="bg-emerald-800 hover:bg-emerald-600 px-3 py-1.5 rounded-lg text-sm font-medium transition shadow-sm">
-                    📋 Meine Liste (<span id="product-count">0</span>)
+                    📋 Dashboard (<span id="product-count">0</span>)
                 </button>
             </div>
         </div>
@@ -84,7 +84,16 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Kategorie</label>
-                            <input type="text" id="prod-category" placeholder="z.B. Brot, Mehl, Snack" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <select id="prod-category" class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+                                <option value="Brot">🍞 Brot</option>
+                                <option value="Mehl & Backmischungen">🌾 Mehl & Backmischungen</option>
+                                <option value="Nudeln">🍝 Nudeln</option>
+                                <option value="Snacks & Knabberzeug">🥨 Snacks & Knabberzeug</option>
+                                <option value="Müsli & Frühstück">🥣 Müsli & Frühstück</option>
+                                <option value="Süßigkeiten">🍫 Süßigkeiten</option>
+                                <option value="Fertiggerichte">🍲 Fertiggerichte</option>
+                                <option value="Sonstiges">📦 Sonstiges</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Kaufort / Laden</label>
@@ -122,17 +131,40 @@
             </div>
         </section>
 
-        <!-- TAB 2: PRODUKT-LISTE -->
+        <!-- TAB 2: DASHBOARD & FILTER-LISTE -->
         <section id="tab-list" class="space-y-4 hidden">
-            <div class="flex flex-col sm:flex-row gap-3 justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-emerald-100">
-                <input type="text" id="search-input" oninput="renderList()" placeholder="Nach Name, Marke oder Ort suchen..." class="w-full sm:w-72 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <select id="filter-rating" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
-                        <option value="">Alle Sterne</option>
-                        <option value="5">5 Sterne</option>
-                        <option value="4">4+ Sterne</option>
-                        <option value="3">3+ Sterne</option>
-                    </select>
+            <!-- Filter & Suchbereich -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-emerald-100 space-y-3">
+                <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
+                    <input type="text" id="search-input" oninput="renderList()" placeholder="Nach Name, Marke oder Ort suchen..." class="w-full sm:w-1/2 border border-gray-300 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                    
+                    <div class="flex gap-2 w-full sm:w-auto overflow-x-auto">
+                        <!-- Kategorie Filter -->
+                        <select id="filter-category" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <option value="">Alle Kategorien</option>
+                            <option value="Brot">🍞 Brot</option>
+                            <option value="Mehl & Backmischungen">🌾 Mehl & Backmischungen</option>
+                            <option value="Nudeln">🍝 Nudeln</option>
+                            <option value="Snacks & Knabberzeug">🥨 Snacks & Knabberzeug</option>
+                            <option value="Müsli & Frühstück">🥣 Müsli & Frühstück</option>
+                            <option value="Süßigkeiten">🍫 Süßigkeiten</option>
+                            <option value="Fertiggerichte">🍲 Fertiggerichte</option>
+                            <option value="Sonstiges">📦 Sonstiges</option>
+                        </select>
+
+                        <!-- Marken Filter (wird dynamisch befüllt) -->
+                        <select id="filter-brand" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <option value="">Alle Marken</option>
+                        </select>
+
+                        <!-- Sterne Filter -->
+                        <select id="filter-rating" onchange="renderList()" class="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 bg-white">
+                            <option value="">Alle Sterne</option>
+                            <option value="5">5 Sterne</option>
+                            <option value="4">4+ Sterne</option>
+                            <option value="3">3+ Sterne</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -145,7 +177,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-6 text-xs text-gray-500">
-        Glutenfrei Verkostungs-Tracker &bull; Daten via Open Food Facts
+        Glutino &bull; Glutenfrei Verkostungs-Tracker &bull; Daten via Open Food Facts
     </footer>
 
     <!-- JavaScript Logik -->
@@ -170,6 +202,7 @@
                 initScanner();
             } else {
                 stopScanner();
+                updateBrandFilterOptions();
                 renderList();
             }
             updateCount();
@@ -217,13 +250,21 @@
                     const p = data.product;
                     const name = p.product_name || p.product_name_de || "Unbekanntes Produkt";
                     const brand = p.brands || "Unbekannter Hersteller";
-                    const category = p.categories_tags && p.categories_tags.length > 0 ? p.categories_tags[0].replace('en:', '').replace(/-/g, ' ') : '';
                     const imageUrl = p.image_front_url || '';
 
                     document.getElementById('prod-name').value = name;
                     document.getElementById('prod-brand').value = brand;
-                    document.getElementById('prod-category').value = category;
                     document.getElementById('prod-image').value = imageUrl;
+
+                    // Intelligente Vorauswahl der Kategorie anhand Open Food Facts Tags
+                    const catString = JSON.stringify(p.categories_tags || []).toLowerCase();
+                    const categorySelect = document.getElementById('prod-category');
+                    if (catString.includes('bread') || catString.includes('brot')) categorySelect.value = "Brot";
+                    else if (catString.includes('flour') || catString.includes('mehl') || catString.includes('mix')) categorySelect.value = "Mehl & Backmischungen";
+                    else if (catString.includes('pasta') || catString.includes('nudeln')) categorySelect.value = "Nudeln";
+                    else if (catString.includes('snack') || catString.includes('chips')) categorySelect.value = "Snacks & Knabberzeug";
+                    else if (catString.includes('breakfast') || catString.includes('muesli')) categorySelect.value = "Müsli & Frühstück";
+                    else if (catString.includes('chocolate') || catString.includes('sweet')) categorySelect.value = "Süßigkeiten";
 
                     if (imageUrl) {
                         const imgEl = document.getElementById('prod-img-preview');
@@ -236,7 +277,6 @@
                     statusBadge.innerText = "Produkt nicht in Datenbank – bitte manuell ausfüllen.";
                     document.getElementById('prod-name').value = "";
                     document.getElementById('prod-brand').value = "";
-                    document.getElementById('prod-category').value = "";
                     document.getElementById('prod-img-preview').classList.add('hidden');
                 }
             } catch (err) {
@@ -300,24 +340,40 @@
             if (confirm("Möchtest du diesen Eintrag wirklich löschen?")) {
                 products = products.filter(p => p.id !== id);
                 localStorage.setItem('gf_products', JSON.stringify(products));
+                updateBrandFilterOptions();
                 renderList();
                 updateCount();
             }
         }
 
+        function updateBrandFilterOptions() {
+            const brandSelect = document.getElementById('filter-brand');
+            const currentSelected = brandSelect.value;
+            const brands = [...new Set(products.map(p => p.brand).filter(Boolean))].sort();
+
+            brandSelect.innerHTML = '<option value="">Alle Marken</option>' + 
+                brands.map(b => `<option value="${b}">${b}</option>`).join('');
+            
+            brandSelect.value = currentSelected;
+        }
+
         function renderList() {
             const listEl = document.getElementById('product-list');
             const search = document.getElementById('search-input').value.toLowerCase();
+            const selectedCategory = document.getElementById('filter-category').value;
+            const selectedBrand = document.getElementById('filter-brand').value;
             const minRating = parseInt(document.getElementById('filter-rating').value) || 0;
 
             const filtered = products.filter(p => {
                 const matchesSearch = (p.name + ' ' + p.brand + ' ' + p.store + ' ' + p.category).toLowerCase().includes(search);
+                const matchesCategory = !selectedCategory || p.category === selectedCategory;
+                const matchesBrand = !selectedBrand || p.brand === selectedBrand;
                 const matchesRating = p.rating >= minRating;
-                return matchesSearch && matchesRating;
+                return matchesSearch && matchesCategory && matchesBrand && matchesRating;
             });
 
             if (filtered.length === 0) {
-                listEl.innerHTML = `<div class="bg-white p-8 rounded-2xl text-center text-gray-400 border border-emerald-100">Keine Einträge gefunden.</div>`;
+                listEl.innerHTML = `<div class="bg-white p-8 rounded-2xl text-center text-gray-400 border border-emerald-100">Keine passenden Einträge gefunden.</div>`;
                 return;
             }
 
